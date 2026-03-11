@@ -27,9 +27,9 @@ export function TopBar() {
       timestamp: new Date().toISOString(),
       status: "OPERATIONAL",
       threatLevel: "MODERATE",
-      activeModules: ["Dashboard", "Intel Map", "Middle East Analysis", "Agent Chat", "Intel Core", "Eye of Kal-El", "Code Forge"],
+      activeModules: ["Dashboard", "Intel Map", "Middle East Analysis", "Cyber Threats", "SIGINT", "HUMINT", "Satellites", "Maritime", "Agent Chat", "Intel Core", "Eye of Kal-El", "Code Forge", "Reports"],
       connectors: ["OpenSky Network", "IPInfo.io", "Shodan", "VirusTotal", "OpenRouter AI", "AbuseIPDB"],
-      version: "2.3.0",
+      version: "3.0.0",
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -82,7 +82,7 @@ export function TopBar() {
       <div className="w-px h-3 bg-white/[0.06]" />
 
       {/* Version */}
-      <span className="text-[8px] font-mono text-white/10">v2.3.0</span>
+      <span className="text-[8px] font-mono text-white/10">v3.0.0</span>
     </div>
   );
 }

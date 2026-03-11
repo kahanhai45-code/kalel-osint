@@ -214,7 +214,9 @@ export default function Dashboard() {
             </div>
             <div className="flex gap-1 mt-2">
               {DEFCON_LEVELS.map(d => (
-                <button key={d.level} onClick={() => setDefconLevel(d.level)} className={`flex-1 h-1.5 rounded-full transition-all ${defconLevel === d.level ? "opacity-100 scale-y-150" : "opacity-30"}`} style={{ backgroundColor: d.bg }} />
+                <button key={d.level} onClick={() => setDefconLevel(d.level)} className={`flex-1 rounded-md transition-all flex items-center justify-center ${defconLevel === d.level ? "h-5 opacity-100 ring-1 ring-white/30" : "h-3 opacity-40 hover:opacity-60"}`} style={{ backgroundColor: d.bg }}>
+                  <span className={`text-[7px] font-black ${defconLevel === d.level ? "block" : "hidden"}`} style={{ color: d.color }}>{d.level}</span>
+                </button>
               ))}
             </div>
           </div>

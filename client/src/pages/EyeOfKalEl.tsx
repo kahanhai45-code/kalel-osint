@@ -24,11 +24,15 @@ export default function EyeOfKalEl() {
 
   const loadCameras = useCallback(async () => {
     try {
-      const res = await fetch("/api/discovered-cameras");
-      const data = await res.json();
-      setCameras(data);
-      addLog(`Base chargée : ${data.length} cibles`, "success");
-    } catch { addLog("Erreur de chargement", "error"); }
+      const stored = localStorage.getItem("discoveredCameras");
+      if (stored) {
+        const data = JSON.parse(stored);
+        setCameras(data);
+        addLog(`Base charg\u00e9e : ${data.length} cibles`, "success");
+      } else {
+        addLog("Syst\u00e8me initialis\u00e9 \u2014 pr\u00eat pour le scan", "info");
+      }
+    } catch { addLog("Syst\u00e8me initialis\u00e9 \u2014 pr\u00eat pour le scan", "info"); }
   }, [addLog]);
 
   const runScan = useCallback(async () => {
@@ -46,8 +50,12 @@ export default function EyeOfKalEl() {
       status: Math.random() > 0.3 ? "online" as const : "offline" as const,
       source: "scout-autonomous"
     }));
-    setCameras(prev => [...prev, ...newCams]);
-    addLog(`${count} nouvelles cibles injectées`, "success");
+    setCameras(prev => {
+      const updated = [...prev, ...newCams];
+      localStorage.setItem("discoveredCameras", JSON.stringify(updated));
+      return updated;
+    });
+    addLog(`${count} nouvelles cibles inject\u00e9es`, "success");
     setIsScanning(false);
   }, [scanIntensity, addLog]);
 

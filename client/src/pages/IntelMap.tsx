@@ -97,9 +97,10 @@ export default function IntelMap() {
 
   const loadDiscoveredCameras = useCallback(async () => {
     try {
-      const res = await fetch("/api/discovered-cameras");
-      if (res.ok) {
-        const cameras: DiscoveredCamera[] = await res.json();
+      // Load from localStorage (set by Eye of Kal-El scanner)
+      const stored = localStorage.getItem("dynamicCameras");
+      if (stored) {
+        const cameras: DiscoveredCamera[] = JSON.parse(stored);
         setDiscoveredCameras(cameras);
         if (mapRef.current) {
           if (discoveredCluster.current) mapRef.current.removeLayer(discoveredCluster.current);

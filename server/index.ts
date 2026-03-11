@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const OPENROUTER_KEY = "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";
-const VERSION = "2.5.0";
+const VERSION = "3.0.0";
 
 // Rate limiting simple
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
