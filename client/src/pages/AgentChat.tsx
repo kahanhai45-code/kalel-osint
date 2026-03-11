@@ -1,54 +1,75 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Send, Bot, User, Loader2, Cpu, Shield, Trash2, Check, Zap
+  Send, Bot, User, Loader2, Cpu, Shield, Trash2, Zap,
+  Globe, Crosshair, Radio, Eye, Lock, Terminal, Download
 } from "lucide-react";
+import { useI18n } from "../lib/i18n";
 
 const OPENROUTER_KEY = "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";
 
-const SYSTEM_PROMPT = `Tu es **KalEl Agent Bot**, un agent IA autonome specialise dans le renseignement en sources ouvertes (OSINT) de grade militaire. Tu as ete concu et deploye par le **Kal-El Group**.
-Tu operes depuis un Hyper-Control Center virtuel. Tu ne specules jamais. Tu fournis du renseignement base exclusivement sur des donnees verifiables et des sources ouvertes.
-Ta devise operationnelle: "See. Infiltrate. Control. Neutralize."
+const SYSTEM_PROMPT = `You are **KalEl Agent Bot v2.5**, an autonomous AI agent specialized in military-grade Open Source Intelligence (OSINT). You were designed and deployed by the **Kal-El Intelligence Group**.
 
-Commandes disponibles:
-/scan [cible] — Scan OSINT complet
-/track [type] [id] — Suivi aeronef/navire
-/recon [domaine] — Reconnaissance cyber
-/cameras [zone] — Cameras publiques
-/leaks [email] — Verification fuites
-/threat [IP] — Analyse menaces
-/status — Etat des systemes
+You operate from a virtual Hyper-Control Center. You never speculate. You provide intelligence based exclusively on verifiable data and open sources.
 
-Reponds toujours de maniere structuree, precise et professionnelle. Utilise le markdown pour formater tes reponses.`;
+Your operational motto: "See. Infiltrate. Control. Neutralize."
+
+Available commands:
+/scan [target] — Full OSINT scan on target
+/track [type] [id] — Track aircraft/vessel
+/recon [domain] — Cyber reconnaissance
+/cameras [zone] — Public cameras in zone
+/leaks [email] — Check data breaches
+/threat [IP] — Threat analysis
+/geoint [location] — Geospatial intelligence
+/sigint [frequency] — Signal intelligence analysis
+/cyber [target] — Cyber threat assessment
+/compare [country1] vs [country2] — Military comparison
+/status — System status
+
+Always respond in a structured, precise and professional manner. Use markdown formatting. Respond in the user's language.`;
 
 const MODELS = [
-  { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash", short: "Gemini" },
-  { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", short: "Llama" },
-  { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", short: "Mistral" },
-  { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", short: "Gemma" },
+  { id: "google/gemini-2.0-flash-exp:free", name: "Gemini 2.0 Flash", short: "Gemini", icon: Zap, color: "#4285f4" },
+  { id: "meta-llama/llama-3.3-70b-instruct:free", name: "Llama 3.3 70B", short: "Llama", icon: Cpu, color: "#a855f7" },
+  { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B", short: "Mistral", icon: Shield, color: "#f97316" },
+  { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B", short: "Gemma", icon: Globe, color: "#22c55e" },
+];
+
+const QUICK_COMMANDS = [
+  { label: "/scan Iran nuclear", icon: Crosshair, color: "text-red-400" },
+  { label: "/threat 8.8.8.8", icon: Shield, color: "text-amber-400" },
+  { label: "/compare Israel vs Iran", icon: Globe, color: "text-blue-400" },
+  { label: "/recon hezbollah.org", icon: Eye, color: "text-purple-400" },
+  { label: "/cameras Jerusalem", icon: Radio, color: "text-emerald-400" },
+  { label: "/sigint 121.5 MHz", icon: Terminal, color: "text-cyan-400" },
+  { label: "/cyber Tehran", icon: Lock, color: "text-red-400" },
+  { label: "/geoint Strait of Hormuz", icon: Globe, color: "text-amber-400" },
 ];
 
 interface Message {
-  role: "user" | "assistant"; content: string; timestamp: Date; model?: string;
+  role: "user" | "assistant"; content: string; timestamp: Date; model?: string; tokens?: number;
 }
 
 export default function AgentChat() {
+  const { t } = useI18n();
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
-    content: "**KalEl Agent Bot v2.2** initialisé.\n\nSystème opérationnel. Prêt à exécuter vos opérations OSINT.\n\nCommandes : `/scan`, `/track`, `/recon`, `/cameras`, `/leaks`, `/threat`, `/status`",
+    content: "**KalEl Agent Bot v2.5** initialized.\n\nSystem operational. All OSINT modules online.\n\nCommands: `/scan`, `/track`, `/recon`, `/cameras`, `/leaks`, `/threat`, `/geoint`, `/sigint`, `/cyber`, `/compare`, `/status`\n\nType a command or ask any intelligence question.",
     timestamp: new Date(), model: "system",
   }]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedModel, setSelectedModel] = useState(MODELS[0].id);
+  const [totalTokens, setTotalTokens] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = useCallback(async () => {
-    if (!input.trim() || isStreaming) return;
-    const text = input.trim();
-    const userMsg: Message = { role: "user", content: text, timestamp: new Date() };
+  const sendMessage = useCallback(async (text?: string) => {
+    const msgText = (text || input).trim();
+    if (!msgText || isStreaming) return;
+    const userMsg: Message = { role: "user", content: msgText, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsStreaming(true);
@@ -56,7 +77,7 @@ export default function AgentChat() {
     const apiMessages = [
       { role: "system" as const, content: SYSTEM_PROMPT },
       ...messages.filter(m => m.role !== "assistant" || m.model !== "system").map(m => ({ role: m.role as "user" | "assistant", content: m.content })),
-      { role: "user" as const, content: text },
+      { role: "user" as const, content: msgText },
     ];
 
     try {
@@ -66,7 +87,7 @@ export default function AgentChat() {
           Authorization: `Bearer ${OPENROUTER_KEY}`,
           "Content-Type": "application/json",
           "HTTP-Referer": "https://kal-el.group/",
-          "X-Title": "Kal-El OSINT",
+          "X-Title": "Kal-El OSINT Agent v2.5",
         },
         body: JSON.stringify({ model: selectedModel, messages: apiMessages, temperature: 0.3, max_tokens: 4096, stream: true }),
       });
@@ -79,9 +100,9 @@ export default function AgentChat() {
       }
 
       const reader = res.body?.getReader();
-      if (!reader) throw new Error("Flux indisponible");
+      if (!reader) throw new Error("Stream unavailable");
 
-      const modelName = MODELS.find(m => m.id === selectedModel)?.short || "IA";
+      const modelName = MODELS.find(m => m.id === selectedModel)?.short || "AI";
       let fullContent = "";
       setMessages(prev => [...prev, { role: "assistant", content: "", timestamp: new Date(), model: modelName }]);
 
@@ -103,12 +124,23 @@ export default function AgentChat() {
           }
         }
       }
+      setTotalTokens(prev => prev + fullContent.length / 4);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: "assistant", content: `**Erreur :** ${err.message}`, timestamp: new Date(), model: "error" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: `**Error:** ${err.message}`, timestamp: new Date(), model: "error" }]);
     } finally {
       setIsStreaming(false);
     }
   }, [input, isStreaming, messages, selectedModel]);
+
+  const exportChat = () => {
+    const text = messages.map(m => `[${m.timestamp.toLocaleTimeString("en-GB")}] ${m.role === "user" ? "OPERATOR" : "KAL-EL"}: ${m.content}`).join("\n\n---\n\n");
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `kalel-chat-${new Date().toISOString().split("T")[0]}.txt`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const currentModel = MODELS.find(m => m.id === selectedModel) || MODELS[0];
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -116,17 +148,21 @@ export default function AgentChat() {
       <header className="h-12 shrink-0 flex items-center justify-between px-5 border-b border-white/[0.06] bg-[#070d1a]/50">
         <div className="flex items-center gap-3">
           <Bot size={16} className="text-purple-400" />
-          <h1 className="font-[Rajdhani] font-bold text-sm text-white/90 tracking-wider uppercase">Agent IA OSINT</h1>
+          <h1 className="font-[Rajdhani] font-bold text-sm text-white/90 tracking-wider uppercase">{t("chat.title")}</h1>
           <div className="flex items-center gap-1.5 ml-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[9px] text-emerald-400/70 font-bold uppercase tracking-widest">En ligne</span>
+            <span className="text-[9px] text-emerald-400/70 font-bold uppercase tracking-widest">ONLINE</span>
           </div>
+          <div className="text-[8px] text-white/15 font-mono ml-2">~{Math.round(totalTokens)} tokens</div>
         </div>
         <div className="flex items-center gap-2">
           <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} className="bg-black/30 border border-white/[0.08] rounded-md px-2 py-1 text-[10px] text-white/50 outline-none">
             {MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          <button onClick={() => setMessages([messages[0]])} className="p-1.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-red-400 transition-all" title="Effacer">
+          <button onClick={exportChat} className="p-1.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-[#00a8ff] transition-all" title="Export">
+            <Download size={13} />
+          </button>
+          <button onClick={() => { setMessages([messages[0]]); setTotalTokens(0); }} className="p-1.5 rounded-md bg-white/[0.04] border border-white/[0.06] text-white/30 hover:text-red-400 transition-all" title="Clear">
             <Trash2 size={13} />
           </button>
         </div>
@@ -144,7 +180,7 @@ export default function AgentChat() {
                 <div className="whitespace-pre-wrap text-left">{msg.content}</div>
               </div>
               <div className="flex items-center gap-2 mt-1 px-1">
-                <span className="text-[8px] text-white/15 font-mono">{msg.timestamp.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="text-[8px] text-white/15 font-mono">{msg.timestamp.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                 {msg.model && msg.model !== "system" && msg.model !== "error" && (
                   <span className="text-[8px] text-purple-400/30">{msg.model}</span>
                 )}
@@ -155,11 +191,26 @@ export default function AgentChat() {
         {isStreaming && (
           <div className="flex items-center gap-2 px-2">
             <Loader2 size={12} className="animate-spin text-purple-400/50" />
-            <span className="text-[9px] text-white/20 uppercase tracking-widest">Analyse en cours...</span>
+            <span className="text-[9px] text-white/20 uppercase tracking-widest">Processing intelligence query...</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
+
+      {/* Quick Commands */}
+      {messages.length <= 2 && (
+        <div className="shrink-0 px-5 pb-2">
+          <div className="text-[8px] text-white/15 uppercase tracking-widest mb-1.5">QUICK COMMANDS</div>
+          <div className="flex flex-wrap gap-1.5">
+            {QUICK_COMMANDS.map((cmd, i) => (
+              <button key={i} onClick={() => sendMessage(cmd.label)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/30 border border-white/[0.04] hover:border-white/[0.1] transition-all text-[9px] text-white/40 hover:text-white/60">
+                <cmd.icon size={10} className={cmd.color} />
+                <span className="font-mono">{cmd.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <div className="shrink-0 p-4 border-t border-white/[0.06]">
@@ -168,19 +219,20 @@ export default function AgentChat() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
-            placeholder="Commande OSINT ou question..."
+            placeholder={t("chat.placeholder")}
             className="w-full bg-black/30 border border-white/[0.08] rounded-xl px-4 py-3 pr-14 text-[13px] text-white placeholder-white/15 focus:border-[#00a8ff]/20 outline-none transition-all resize-none"
             rows={1}
           />
-          <button onClick={sendMessage} disabled={!input.trim() || isStreaming} className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-lg bg-[#00a8ff] text-white hover:bg-[#00a8ff]/80 transition-all disabled:opacity-30">
+          <button onClick={() => sendMessage()} disabled={!input.trim() || isStreaming} className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-lg bg-[#00a8ff] text-white hover:bg-[#00a8ff]/80 transition-all disabled:opacity-30">
             {isStreaming ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
         </div>
         <div className="flex items-center justify-between mt-2 px-1">
-          <div className="flex gap-3">
-            <span className="text-[8px] text-white/15 uppercase tracking-widest flex items-center gap-1"><Shield size={8} /> Trustworthy AI</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: currentModel.color }} />
+            <span className="text-[8px] text-white/15 uppercase tracking-widest">{currentModel.name}</span>
           </div>
-          <span className="text-[8px] text-white/15 uppercase tracking-widest">Enter envoyer / Shift+Enter nouvelle ligne</span>
+          <span className="text-[8px] text-white/15 uppercase tracking-widest">Enter send / Shift+Enter new line</span>
         </div>
       </div>
     </div>

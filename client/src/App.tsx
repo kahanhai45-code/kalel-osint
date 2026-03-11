@@ -9,6 +9,8 @@ import CodeForge from "./pages/CodeForge";
 import EyeOfKalEl from "./pages/EyeOfKalEl";
 import IntelCore from "./pages/IntelCore";
 import MiddleEastAnalysis from "./pages/MiddleEastAnalysis";
+import CyberThreat from "./pages/CyberThreat";
+import SigintMonitor from "./pages/SigintMonitor";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
             <Route path="/eye" component={EyeOfKalEl} />
             <Route path="/intel-core" component={IntelCore} />
             <Route path="/middle-east" component={MiddleEastAnalysis} />
+            <Route path="/cyber" component={CyberThreat} />
+            <Route path="/sigint" component={SigintMonitor} />
             <Route component={NotFound} />
           </Switch>
         </main>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Map, MessageSquare, Code2, Radar, Network,
-  Shield, ChevronLeft, ChevronRight, Activity, Globe
+  Shield, ChevronLeft, ChevronRight, Activity, Globe, Radio, Zap
 } from "lucide-react";
 import { useI18n } from "../lib/i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -13,16 +13,39 @@ interface NavItem {
   href: string;
   icon: typeof LayoutDashboard;
   highlight?: boolean;
+  accent?: string;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { labelKey: "nav.dashboard", descKey: "nav.dashboard.desc", href: "/", icon: LayoutDashboard },
-  { labelKey: "nav.map", descKey: "nav.map.desc", href: "/map", icon: Map },
-  { labelKey: "nav.middleeast", descKey: "nav.middleeast.desc", href: "/middle-east", icon: Globe, highlight: true },
-  { labelKey: "nav.chat", descKey: "nav.chat.desc", href: "/chat", icon: MessageSquare },
-  { labelKey: "nav.intelcore", descKey: "nav.intelcore.desc", href: "/intel-core", icon: Network },
-  { labelKey: "nav.eye", descKey: "nav.eye.desc", href: "/eye", icon: Radar },
-  { labelKey: "nav.forge", descKey: "nav.forge.desc", href: "/forge", icon: Code2 },
+interface NavSection {
+  titleKey: string;
+  items: NavItem[];
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    titleKey: "nav.section.command",
+    items: [
+      { labelKey: "nav.dashboard", descKey: "nav.dashboard.desc", href: "/", icon: LayoutDashboard },
+      { labelKey: "nav.map", descKey: "nav.map.desc", href: "/map", icon: Map },
+    ],
+  },
+  {
+    titleKey: "nav.section.intel",
+    items: [
+      { labelKey: "nav.middleeast", descKey: "nav.middleeast.desc", href: "/middle-east", icon: Globe, highlight: true },
+      { labelKey: "nav.cyber", descKey: "nav.cyber.desc", href: "/cyber", icon: Shield, accent: "red" },
+      { labelKey: "nav.sigint", descKey: "nav.sigint.desc", href: "/sigint", icon: Radio, accent: "emerald" },
+    ],
+  },
+  {
+    titleKey: "nav.section.tools",
+    items: [
+      { labelKey: "nav.chat", descKey: "nav.chat.desc", href: "/chat", icon: MessageSquare },
+      { labelKey: "nav.intelcore", descKey: "nav.intelcore.desc", href: "/intel-core", icon: Network },
+      { labelKey: "nav.eye", descKey: "nav.eye.desc", href: "/eye", icon: Radar },
+      { labelKey: "nav.forge", descKey: "nav.forge.desc", href: "/forge", icon: Code2 },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -46,56 +69,46 @@ export function Sidebar() {
         {!collapsed && (
           <div className={`${isRtl ? "mr-3" : "ml-3"} overflow-hidden`}>
             <div className="font-[Rajdhani] font-bold text-sm text-white tracking-wider leading-none">KAL-EL</div>
-            <div className="font-[Rajdhani] text-[10px] text-[#00a8ff] tracking-[0.2em] leading-none mt-0.5">OSINT SYSTEM</div>
+            <div className="font-[Rajdhani] text-[10px] text-[#00a8ff] tracking-[0.2em] leading-none mt-0.5">OSINT SYSTEM v2.5</div>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = location === item.href;
-          const isHighlight = item.highlight;
-          return (
-            <Link key={item.href} href={item.href}>
-              <div
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 cursor-pointer ${
-                  isActive
-                    ? isHighlight
-                      ? "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]"
-                      : "bg-[#00a8ff]/10 text-[#00a8ff] shadow-[inset_0_0_0_1px_rgba(0,168,255,0.15)]"
-                    : isHighlight
-                      ? "text-red-400/50 hover:text-red-400/80 hover:bg-red-500/[0.05]"
-                      : "text-white/40 hover:text-white/70 hover:bg-white/[0.03]"
-                }`}
-              >
-                <item.icon
-                  size={18}
-                  className={`shrink-0 transition-colors ${
-                    isActive
-                      ? isHighlight ? "text-red-400" : "text-[#00a8ff]"
-                      : isHighlight ? "text-red-400/40 group-hover:text-red-400/60" : "text-white/30 group-hover:text-white/50"
-                  }`}
-                />
-                {!collapsed && (
-                  <div className="overflow-hidden">
-                    <div className={`text-xs font-semibold tracking-wide leading-none ${
-                      isActive ? (isHighlight ? "text-red-400" : "text-[#00a8ff]") : ""
-                    }`}>
-                      {t(item.labelKey)}
+      <nav className="flex-1 py-2 px-2 overflow-y-auto">
+        {NAV_SECTIONS.map((section, si) => (
+          <div key={si} className="mb-2">
+            {!collapsed && (
+              <div className="px-3 py-1.5 text-[8px] font-bold text-white/15 uppercase tracking-[0.2em]">{t(section.titleKey)}</div>
+            )}
+            {collapsed && si > 0 && <div className="mx-3 my-1 border-t border-white/[0.04]" />}
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const isActive = location === item.href;
+                const isHighlight = item.highlight;
+                const accentColor = item.accent === "red" ? { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/40 hover:text-red-400/70 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/30 group-hover:text-red-400/50", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" }
+                  : item.accent === "emerald" ? { active: "bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.15)]", inactive: "text-emerald-400/40 hover:text-emerald-400/70 hover:bg-emerald-500/[0.05]", icon: "text-emerald-400", iconInactive: "text-emerald-400/30 group-hover:text-emerald-400/50", dot: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" }
+                  : isHighlight ? { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/50 hover:text-red-400/80 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/40 group-hover:text-red-400/60", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" }
+                  : { active: "bg-[#00a8ff]/10 text-[#00a8ff] shadow-[inset_0_0_0_1px_rgba(0,168,255,0.15)]", inactive: "text-white/40 hover:text-white/70 hover:bg-white/[0.03]", icon: "text-[#00a8ff]", iconInactive: "text-white/30 group-hover:text-white/50", dot: "bg-[#00a8ff] shadow-[0_0_6px_rgba(0,168,255,0.6)]" };
+
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <div className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer ${isActive ? accentColor.active : accentColor.inactive}`}>
+                      <item.icon size={16} className={`shrink-0 transition-colors ${isActive ? accentColor.icon : accentColor.iconInactive}`} />
+                      {!collapsed && (
+                        <div className="overflow-hidden flex-1">
+                          <div className={`text-[11px] font-semibold tracking-wide leading-none ${isActive ? accentColor.icon : ""}`}>{t(item.labelKey)}</div>
+                          <div className="text-[8px] mt-0.5 leading-none truncate text-white/15">{t(item.descKey)}</div>
+                        </div>
+                      )}
+                      {isActive && <div className={`${isRtl ? "mr-auto" : "ml-auto"} w-1.5 h-1.5 rounded-full shrink-0 ${accentColor.dot}`} />}
                     </div>
-                    <div className={`text-[9px] mt-1 leading-none truncate ${isHighlight ? "text-red-400/20" : "text-white/20"}`}>{t(item.descKey)}</div>
-                  </div>
-                )}
-                {isActive && (
-                  <div className={`${isRtl ? "mr-auto" : "ml-auto"} w-1.5 h-1.5 rounded-full shrink-0 ${
-                    isHighlight ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" : "bg-[#00a8ff] shadow-[0_0_6px_rgba(0,168,255,0.6)]"
-                  }`} />
-                )}
-              </div>
-            </Link>
-          );
-        })}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Language + Status + Collapse */}

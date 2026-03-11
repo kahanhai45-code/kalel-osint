@@ -8,6 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const OPENROUTER_KEY = "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";
+const VERSION = "2.5.0";
 
 // Rate limiting simple
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -50,7 +51,7 @@ async function startServer() {
   app.get("/api/status", (_req, res) => {
     res.json({
       status: "operational",
-      version: "2.2.0",
+      version: VERSION,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
       modules: {
@@ -220,7 +221,7 @@ async function startServer() {
 
   const port = process.env.PORT || 3000;
   server.listen(port, () => {
-    console.log(`[KalEl] Server v2.2 running on http://localhost:${port}/`);
+    console.log(`[KalEl] Server v${VERSION} running on http://localhost:${port}/`);
   });
 }
 

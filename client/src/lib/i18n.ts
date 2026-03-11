@@ -27,6 +27,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.forge": "Code Forge",
     "nav.forge.desc": "Code Optimization",
     "sidebar.system_active": "System Active",
+    "nav.section.command": "COMMAND",
+    "nav.section.intel": "INTELLIGENCE",
+    "nav.section.tools": "TOOLS",
+    "nav.cyber": "Cyber Threats",
+    "nav.cyber.desc": "Global Attack Map",
+    "nav.sigint": "SIGINT",
+    "nav.sigint.desc": "Signal Intelligence",
 
     // Dashboard
     "dash.title": "COMMAND CENTER",
@@ -170,6 +177,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.forge": "Code Forge",
     "nav.forge.desc": "Optimisation de code",
     "sidebar.system_active": "Système Actif",
+    "nav.section.command": "COMMANDEMENT",
+    "nav.section.intel": "RENSEIGNEMENT",
+    "nav.section.tools": "OUTILS",
+    "nav.cyber": "Cyber Menaces",
+    "nav.cyber.desc": "Carte d'attaques mondiale",
+    "nav.sigint": "SIGINT",
+    "nav.sigint.desc": "Renseignement Signal",
 
     // Dashboard
     "dash.title": "CENTRE DE COMMANDEMENT",
@@ -313,6 +327,13 @@ const translations: Record<Lang, Record<string, string>> = {
     "nav.forge": "נפחיית קוד",
     "nav.forge.desc": "אופטימיזציית קוד",
     "sidebar.system_active": "מערכת פעילה",
+    "nav.section.command": "פיקוד",
+    "nav.section.intel": "מודיעין",
+    "nav.section.tools": "כלים",
+    "nav.cyber": "איומי סייבר",
+    "nav.cyber.desc": "מפת תקיפות עולמית",
+    "nav.sigint": "סיגינט",
+    "nav.sigint.desc": "מודיעין אותות",
 
     // Dashboard
     "dash.title": "מרכז פיקוד",
