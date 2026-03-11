@@ -20,12 +20,14 @@ interface ApiStatus {
 }
 
 const INITIAL_APIS: ApiStatus[] = [
-  { name: "OpenSky Network", url: "https://opensky-network.org/api/states/all?lamin=45&lomin=5&lamax=47&lomax=7", status: "unknown", latency: null, lastCheck: null, icon: Plane, color: "#00ff88", category: "AERIAL" },
-  { name: "IPInfo.io", url: "https://ipinfo.io/8.8.8.8/json", status: "unknown", latency: null, lastCheck: null, icon: Globe, color: "#00a8ff", category: "GEOLOC" },
-  { name: "Shodan IoT", url: "https://api.shodan.io/api-info?key=dummy", status: "unknown", latency: null, lastCheck: null, icon: Search, color: "#f59e0b", category: "IoT" },
-  { name: "VirusTotal", url: "https://www.virustotal.com/api/v3/ip_addresses/8.8.8.8", status: "unknown", latency: null, lastCheck: null, icon: Shield, color: "#ef4444", category: "THREAT" },
-  { name: "OpenRouter AI", url: "https://openrouter.ai/api/v1/models", status: "unknown", latency: null, lastCheck: null, icon: Cpu, color: "#a855f7", category: "AI" },
-  { name: "AbuseIPDB", url: "https://api.abuseipdb.com/api/v2/check", status: "unknown", latency: null, lastCheck: null, icon: AlertTriangle, color: "#ec4899", category: "ABUSE" },
+  { name: "ip-api.com", url: "/api/geoip/8.8.8.8", status: "unknown", latency: null, lastCheck: null, icon: Globe, color: "#00a8ff", category: "GEOLOC" },
+  { name: "Shodan InternetDB", url: "/api/internetdb/8.8.8.8", status: "unknown", latency: null, lastCheck: null, icon: Search, color: "#f59e0b", category: "IoT" },
+  { name: "OpenSky Network", url: "/api/aircraft?lamin=45&lomin=5&lamax=47&lomax=7", status: "unknown", latency: null, lastCheck: null, icon: Plane, color: "#00ff88", category: "AERIAL" },
+  { name: "CVE CIRCL", url: "/api/cve/latest", status: "unknown", latency: null, lastCheck: null, icon: Shield, color: "#ef4444", category: "CVE" },
+  { name: "NIST NVD", url: "/api/nvd/search?keyword=apache", status: "unknown", latency: null, lastCheck: null, icon: AlertTriangle, color: "#ec4899", category: "VULN" },
+  { name: "crt.sh SSL", url: "/api/certs/google.com", status: "unknown", latency: null, lastCheck: null, icon: Eye, color: "#a855f7", category: "CERTS" },
+  { name: "RIPE NCC", url: "/api/ripe/prefixes/AS15169", status: "unknown", latency: null, lastCheck: null, icon: Network, color: "#06b6d4", category: "ASN" },
+  { name: "OpenRouter AI", url: "https://openrouter.ai/api/v1/models", status: "unknown", latency: null, lastCheck: null, icon: Cpu, color: "#22c55e", category: "AI" },
 ];
 
 // World clocks
@@ -133,14 +135,16 @@ export default function Dashboard() {
     setApis(prev => { const u = [...prev]; u[index] = { ...u[index], status: "testing" }; return u; });
     const start = Date.now();
     try {
-      await fetch(api.url, { mode: "no-cors", signal: AbortSignal.timeout(8000) });
+      const isExternal = api.url.startsWith("http");
+      const res = await fetch(api.url, isExternal ? { mode: "no-cors", signal: AbortSignal.timeout(8000) } : { signal: AbortSignal.timeout(10000) });
       const latency = Date.now() - start;
-      setApis(prev => { const u = [...prev]; u[index] = { ...u[index], status: "online", latency, lastCheck: new Date() }; return u; });
-      addLog(`${api.name}: ONLINE (${latency}ms)`, "success");
+      const isOk = isExternal ? true : res.ok;
+      setApis(prev => { const u = [...prev]; u[index] = { ...u[index], status: isOk ? "online" : "offline", latency, lastCheck: new Date() }; return u; });
+      addLog(`${api.name}: ${isOk ? "ONLINE" : "ERROR"} (${latency}ms)`, isOk ? "success" : "error");
     } catch {
       const latency = Date.now() - start;
-      setApis(prev => { const u = [...prev]; u[index] = { ...u[index], status: latency < 7000 ? "online" : "offline", latency, lastCheck: new Date() }; return u; });
-      addLog(`${api.name}: ${latency < 7000 ? "ONLINE" : "TIMEOUT"} (${latency}ms)`, latency < 7000 ? "success" : "error");
+      setApis(prev => { const u = [...prev]; u[index] = { ...u[index], status: "offline", latency, lastCheck: new Date() }; return u; });
+      addLog(`${api.name}: TIMEOUT (${latency}ms)`, "error");
     }
   }, [apis, addLog]);
 

@@ -28,8 +28,8 @@ export function TopBar() {
       status: "OPERATIONAL",
       threatLevel: "MODERATE",
       activeModules: ["Dashboard", "Intel Map", "Middle East Analysis", "Cyber Threats", "SIGINT", "HUMINT", "Satellites", "Maritime", "Agent Chat", "Intel Core", "Eye of Kal-El", "Code Forge", "Reports"],
-      connectors: ["OpenSky Network", "IPInfo.io", "Shodan", "VirusTotal", "OpenRouter AI", "AbuseIPDB"],
-      version: "3.0.0",
+      connectors: ["ip-api.com", "Shodan InternetDB", "OpenSky Network", "CVE CIRCL", "NIST NVD", "crt.sh", "RIPE NCC", "OpenRouter AI"],
+      version: "3.5.0",
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);

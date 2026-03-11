@@ -157,21 +157,29 @@ export default function IntelMap() {
     if (!ipInput.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`https://ipinfo.io/${ipInput.trim()}/json`);
+      // Use backend OSINT API (combines ip-api + Shodan InternetDB)
+      const res = await fetch(`/api/osint/ip/${ipInput.trim()}`);
       const data = await res.json();
-      const [lat, lng] = (data.loc || "0,0").split(",").map(Number);
-      const result = { query: data.ip, country: data.country, city: data.city, lat, lon: lng, isp: data.org, org: data.org };
-      setIpResult(result);
-      if (mapRef.current) {
-        if (ipMarkerRef.current) mapRef.current.removeLayer(ipMarkerRef.current);
-        const icon = L.divIcon({
-          html: `<div style="color:#00a8ff;filter:drop-shadow(0 0 6px currentColor)"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C7.58 0 4 3.58 4 8c0 5.25 8 16 8 16s8-10.75 8-16c0-4.42-3.58-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z"/></svg></div>`,
-          className: "ip-marker", iconSize: [24, 24], iconAnchor: [12, 24],
-        });
-        ipMarkerRef.current = L.marker([lat, lng], { icon })
-          .bindPopup(`<b>${data.ip}</b><br/>${data.city}, ${data.country}<br/>${data.org}`)
-          .addTo(mapRef.current);
-        mapRef.current.setView([lat, lng], 10);
+      const geo = data.geolocation;
+      const infra = data.infrastructure;
+      if (geo) {
+        const result = { query: geo.query || ipInput, country: geo.country, city: geo.city, lat: geo.lat, lon: geo.lon, isp: geo.isp, org: geo.org };
+        setIpResult(result);
+        if (mapRef.current) {
+          if (ipMarkerRef.current) mapRef.current.removeLayer(ipMarkerRef.current);
+          const threatColor = data.threatScore > 50 ? "#ef4444" : data.threatScore > 20 ? "#f59e0b" : "#00a8ff";
+          const icon = L.divIcon({
+            html: `<div style="color:${threatColor};filter:drop-shadow(0 0 6px currentColor)"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C7.58 0 4 3.58 4 8c0 5.25 8 16 8 16s8-10.75 8-16c0-4.42-3.58-8-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z"/></svg></div>`,
+            className: "ip-marker", iconSize: [24, 24], iconAnchor: [12, 24],
+          });
+          const ports = infra?.ports?.join(", ") || "none";
+          const vulns = infra?.vulns?.length || 0;
+          const hostnames = infra?.hostnames?.join(", ") || "N/A";
+          ipMarkerRef.current = L.marker([geo.lat, geo.lon], { icon })
+            .bindPopup(`<b>${geo.query}</b><br/>${geo.city}, ${geo.country}<br/>${geo.isp}<br/><b>Ports:</b> ${ports}<br/><b>Vulns:</b> ${vulns}<br/><b>Hostnames:</b> ${hostnames}<br/><b>Threat Score:</b> ${data.threatScore}/100`)
+            .addTo(mapRef.current);
+          mapRef.current.setView([geo.lat, geo.lon], 10);
+        }
       }
     } catch (e) { console.error(e); }
     setLoading(false);
