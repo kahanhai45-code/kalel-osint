@@ -11,6 +11,11 @@ import IntelCore from "./pages/IntelCore";
 import MiddleEastAnalysis from "./pages/MiddleEastAnalysis";
 import CyberThreat from "./pages/CyberThreat";
 import SigintMonitor from "./pages/SigintMonitor";
+import HumintDatabase from "./pages/HumintDatabase";
+import SatelliteTracker from "./pages/SatelliteTracker";
+import MaritimeTracker from "./pages/MaritimeTracker";
+import ThreatReport from "./pages/ThreatReport";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -32,6 +37,11 @@ function App() {
             <Route path="/middle-east" component={MiddleEastAnalysis} />
             <Route path="/cyber" component={CyberThreat} />
             <Route path="/sigint" component={SigintMonitor} />
+            <Route path="/humint" component={HumintDatabase} />
+            <Route path="/satellites" component={SatelliteTracker} />
+            <Route path="/maritime" component={MaritimeTracker} />
+            <Route path="/reports" component={ThreatReport} />
+            <Route path="/settings" component={Settings} />
             <Route component={NotFound} />
           </Switch>
         </main>

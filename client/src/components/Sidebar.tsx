@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Map, MessageSquare, Code2, Radar, Network,
-  Shield, ChevronLeft, ChevronRight, Activity, Globe, Radio, Zap
+  Shield, ChevronLeft, ChevronRight, Activity, Globe, Radio, Zap,
+  Users, Satellite, Ship, FileText, Settings
 } from "lucide-react";
 import { useI18n } from "../lib/i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -35,6 +36,14 @@ const NAV_SECTIONS: NavSection[] = [
       { labelKey: "nav.middleeast", descKey: "nav.middleeast.desc", href: "/middle-east", icon: Globe, highlight: true },
       { labelKey: "nav.cyber", descKey: "nav.cyber.desc", href: "/cyber", icon: Shield, accent: "red" },
       { labelKey: "nav.sigint", descKey: "nav.sigint.desc", href: "/sigint", icon: Radio, accent: "emerald" },
+      { labelKey: "nav.humint", descKey: "nav.humint.desc", href: "/humint", icon: Users, accent: "purple" },
+    ],
+  },
+  {
+    titleKey: "nav.section.tracking",
+    items: [
+      { labelKey: "nav.satellites", descKey: "nav.satellites.desc", href: "/satellites", icon: Satellite, accent: "cyan" },
+      { labelKey: "nav.maritime", descKey: "nav.maritime.desc", href: "/maritime", icon: Ship, accent: "blue" },
     ],
   },
   {
@@ -44,9 +53,29 @@ const NAV_SECTIONS: NavSection[] = [
       { labelKey: "nav.intelcore", descKey: "nav.intelcore.desc", href: "/intel-core", icon: Network },
       { labelKey: "nav.eye", descKey: "nav.eye.desc", href: "/eye", icon: Radar },
       { labelKey: "nav.forge", descKey: "nav.forge.desc", href: "/forge", icon: Code2 },
+      { labelKey: "nav.reports", descKey: "nav.reports.desc", href: "/reports", icon: FileText, accent: "amber" },
+    ],
+  },
+  {
+    titleKey: "nav.section.system",
+    items: [
+      { labelKey: "nav.settings", descKey: "nav.settings.desc", href: "/settings", icon: Settings },
     ],
   },
 ];
+
+const ACCENT_MAP: Record<string, { active: string; inactive: string; icon: string; iconInactive: string; dot: string }> = {
+  red: { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/40 hover:text-red-400/70 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/30 group-hover:text-red-400/50", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" },
+  emerald: { active: "bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.15)]", inactive: "text-emerald-400/40 hover:text-emerald-400/70 hover:bg-emerald-500/[0.05]", icon: "text-emerald-400", iconInactive: "text-emerald-400/30 group-hover:text-emerald-400/50", dot: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" },
+  purple: { active: "bg-purple-500/10 text-purple-400 shadow-[inset_0_0_0_1px_rgba(139,92,246,0.15)]", inactive: "text-purple-400/40 hover:text-purple-400/70 hover:bg-purple-500/[0.05]", icon: "text-purple-400", iconInactive: "text-purple-400/30 group-hover:text-purple-400/50", dot: "bg-purple-500 shadow-[0_0_6px_rgba(139,92,246,0.6)]" },
+  cyan: { active: "bg-cyan-500/10 text-cyan-400 shadow-[inset_0_0_0_1px_rgba(6,182,212,0.15)]", inactive: "text-cyan-400/40 hover:text-cyan-400/70 hover:bg-cyan-500/[0.05]", icon: "text-cyan-400", iconInactive: "text-cyan-400/30 group-hover:text-cyan-400/50", dot: "bg-cyan-500 shadow-[0_0_6px_rgba(6,182,212,0.6)]" },
+  blue: { active: "bg-blue-500/10 text-blue-400 shadow-[inset_0_0_0_1px_rgba(59,130,246,0.15)]", inactive: "text-blue-400/40 hover:text-blue-400/70 hover:bg-blue-500/[0.05]", icon: "text-blue-400", iconInactive: "text-blue-400/30 group-hover:text-blue-400/50", dot: "bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.6)]" },
+  amber: { active: "bg-amber-500/10 text-amber-400 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.15)]", inactive: "text-amber-400/40 hover:text-amber-400/70 hover:bg-amber-500/[0.05]", icon: "text-amber-400", iconInactive: "text-amber-400/30 group-hover:text-amber-400/50", dot: "bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.6)]" },
+};
+
+const DEFAULT_ACCENT = { active: "bg-[#00a8ff]/10 text-[#00a8ff] shadow-[inset_0_0_0_1px_rgba(0,168,255,0.15)]", inactive: "text-white/40 hover:text-white/70 hover:bg-white/[0.03]", icon: "text-[#00a8ff]", iconInactive: "text-white/30 group-hover:text-white/50", dot: "bg-[#00a8ff] shadow-[0_0_6px_rgba(0,168,255,0.6)]" };
+
+const HIGHLIGHT_ACCENT = { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/50 hover:text-red-400/80 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/40 group-hover:text-red-400/60", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" };
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -69,7 +98,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className={`${isRtl ? "mr-3" : "ml-3"} overflow-hidden`}>
             <div className="font-[Rajdhani] font-bold text-sm text-white tracking-wider leading-none">KAL-EL</div>
-            <div className="font-[Rajdhani] text-[10px] text-[#00a8ff] tracking-[0.2em] leading-none mt-0.5">OSINT SYSTEM v2.5</div>
+            <div className="font-[Rajdhani] text-[10px] text-[#00a8ff] tracking-[0.2em] leading-none mt-0.5">OSINT SYSTEM v3.0</div>
           </div>
         )}
       </div>
@@ -85,11 +114,7 @@ export function Sidebar() {
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const isActive = location === item.href;
-                const isHighlight = item.highlight;
-                const accentColor = item.accent === "red" ? { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/40 hover:text-red-400/70 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/30 group-hover:text-red-400/50", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" }
-                  : item.accent === "emerald" ? { active: "bg-emerald-500/10 text-emerald-400 shadow-[inset_0_0_0_1px_rgba(16,185,129,0.15)]", inactive: "text-emerald-400/40 hover:text-emerald-400/70 hover:bg-emerald-500/[0.05]", icon: "text-emerald-400", iconInactive: "text-emerald-400/30 group-hover:text-emerald-400/50", dot: "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" }
-                  : isHighlight ? { active: "bg-red-500/10 text-red-400 shadow-[inset_0_0_0_1px_rgba(239,68,68,0.15)]", inactive: "text-red-400/50 hover:text-red-400/80 hover:bg-red-500/[0.05]", icon: "text-red-400", iconInactive: "text-red-400/40 group-hover:text-red-400/60", dot: "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" }
-                  : { active: "bg-[#00a8ff]/10 text-[#00a8ff] shadow-[inset_0_0_0_1px_rgba(0,168,255,0.15)]", inactive: "text-white/40 hover:text-white/70 hover:bg-white/[0.03]", icon: "text-[#00a8ff]", iconInactive: "text-white/30 group-hover:text-white/50", dot: "bg-[#00a8ff] shadow-[0_0_6px_rgba(0,168,255,0.6)]" };
+                const accentColor = item.accent ? (ACCENT_MAP[item.accent] || DEFAULT_ACCENT) : item.highlight ? HIGHLIGHT_ACCENT : DEFAULT_ACCENT;
 
                 return (
                   <Link key={item.href} href={item.href}>
